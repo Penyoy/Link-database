@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Link Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-main: #0f1117;
+            --surface: #161b22;
+            --surface-hover: #1c2128;
+            --surface-raised: #21262d;
+            --primary: #10b981;
+            --primary-dim: #059669;
+            --primary-glow: rgba(16, 185, 129, 0.15);
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --text-main: #e6edf3;
+            --text-muted: #7d8590;
+            --text-dim: #484f58;
+            --border: #30363d;
+            --border-hover: #414b55;
+            --danger: #f85149;
+            --danger-dim: #da3633;
+            --success: #3fb950;
+            --warning: #d29922;
+            --shadow: 0 1px 3px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+            --radius: 6px;
+            --radius-sm: 4px;
+            --transition: all 0.15s ease;
+        }
+
+        html.light {
+            --bg-main: #f6f8fa;
+            --surface: #ffffff;
+            --surface-hover: #f3f4f6;
+            --surface-raised: #eaecef;
+            --primary: #059669;
+            --primary-dim: #047857;
+            --primary-glow: rgba(5, 150, 105, 0.1);
+            --text-main: #1f2328;
+            --text-muted: #656d76;
+            --text-dim: #afb8c1;
+            --border: #d0d7de;
+            --border-hover: #bbc2c9;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            background: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg-main);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .nav-main {
+            height: 60px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-brand i {
+            font-size: 1.4rem;
+            color: var(--primary);
+        }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            background: none;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+        }
+
+        .nav-item.active {
+            background: var(--surface-raised);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-item i {
+            font-size: 1.1rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 1.1rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+            border-color: var(--border-hover);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            padding: 8px 16px 16px;
+            border-top: 1px solid var(--border);
+            gap: 4px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+        }
+
+        .mobile-menu .nav-item {
+            width: 100%;
+            justify-content: flex-start;
+            padding: 12px 16px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-main {
+                padding: 0 16px;
+            }
+            .nav-toggle {
+                display: flex;
+            }
+            .nav-menu {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+
+        /* Layout */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        @media (max-width: 640px) {
+            .dashboard-container {
+                padding: 16px;
+            }
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.2s ease forwards;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .stat-card .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-card .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            background: var(--surface-raised);
+            color: var(--primary);
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .stat-card .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 4px;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .chart-section:hover {
+            border-color: var(--border-hover);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* Links Section */
+        .links-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 13px;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .search-box i.ph-magnifying-glass {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .search-box .clear-search {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 2px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .search-box .clear-search.visible {
+            display: block;
+        }
+
+        .links-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Category Matrix */
+        .category-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .category-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .category-card.hidden {
+            display: none;
+        }
+
+        .category-header {
+            background: var(--surface-raised);
+            color: var(--text-main);
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category-header i {
+            color: var(--primary);
+            margin-right: 6px;
+            font-size: 1rem;
+        }
+
+        .category-header .badge {
+            background: var(--bg-main);
+            color: var(--text-muted);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--border);
+        }
+
+        .category-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .link-item:hover {
+            border-color: var(--primary);
+            background: var(--surface-raised);
+        }
+
+        .link-item.hidden {
+            display: none;
+        }
+
+        .link-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+            padding-right: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-content a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: var(--transition);
+        }
+
+        .link-content a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .link-content span {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 1rem;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(248, 81, 73, 0.1);
+            color: var(--danger);
+        }
+
+        /* Add Section */
+        .add-section {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .input-section {
+            background: var(--surface);
+            padding: 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .input-section:hover {
+            border-color: var(--border-hover);
+        }
+
+        .input-section h2 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-section h2 i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dim);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            color: var(--text-dim);
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        /* SweetAlert */
+        .swal2-popup {
+            font-family: 'Inter', sans-serif !important;
+            border-radius: var(--radius) !important;
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        .swal2-title, .swal2-html-container {
+            color: var(--text-main) !important;
+        }
+
+        .btn-swal {
+            padding: 8px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin: 0 4px;
+            font-family: inherit;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+
+        .btn-swal-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-swal-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Animations */
+        .animate-in {
+            animation: fadeIn 0.25s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-main">
+            <div class="nav-brand">
+                <i class="ph ph-squares-four"></i>
+                <span>Public Link Database</span>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="nav-menu">
+                <button class="nav-item active" data-section="dashboard" onclick="switchTab('dashboard')">
+                    <i class="ph ph-chart-pie"></i>
+                    Dashboard
+                </button>
+                <button class="nav-item" data-section="links" onclick="switchTab('links')">
+                    <i class="ph ph-list-dashes"></i>
+                    Links
+                </button>
+                <button class="nav-item" data-section="add" onclick="switchTab('add')">
+                    <i class="ph ph-plus-circle"></i>
+                    Add Link
+                </button>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn-icon" id="themeToggle" title="Toggle Theme">
+                    <i class="ph ph-sun" id="themeIcon"></i>
+                </button>
+                <button class="nav-toggle" id="navToggle" onclick="toggleMobileMenu()">
+                    <i class="ph ph-list" id="hamburgerIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <button class="nav-item active" data-section="dashboard" onclick="switchTab('dashboard')">
+                <i class="ph ph-chart-pie"></i>
+                Dashboard
+            </button>
+            <button class="nav-item" data-section="links" onclick="switchTab('links')">
+                <i class="ph ph-list-dashes"></i>
+                Links
+            </button>
+            <button class="nav-item" data-section="add" onclick="switchTab('add')">
+                <i class="ph ph-plus-circle"></i>
+                Add Link
+            </button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- SECTION: DASHBOARD -->
+        <div class="section active" id="section-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card animate-in" style="animation-delay: 0.05s">
+                    <div class="stat-header">
+                        <span class="stat-label">Total Links</span>
+                        <div class="stat-icon"><i class="ph ph-link"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTotalLinks">0</div>
+                </div>
+                
+                <div class="stat-card animate-in" style="animation-delay: 0.1s">
+                    <div class="stat-header">
+                        <span class="stat-label">Categories</span>
+                        <div class="stat-icon"><i class="ph ph-folder"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTotalCategories">0</div>
+                </div>
+                
+                <div class="stat-card animate-in" style="animation-delay: 0.15s">
+                    <div class="stat-header">
+                        <span class="stat-label">Today Added</span>
+                        <div class="stat-icon"><i class="ph ph-plus-circle"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTodayLinks">0</div>
+                </div>
+                
+                <div class="stat-card animate-in" style="animation-delay: 0.2s">
+                    <div class="stat-header">
+                        <span class="stat-label">Top Category</span>
+                        <div class="stat-icon"><i class="ph ph-trophy"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTopCategory" style="font-size: 1rem; line-height: 1.4;">-</div>
+                </div>
+            </div>
+
+            <div class="chart-section animate-in" style="animation-delay: 0.25s">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="ph ph-chart-bar"></i>
+                        Distribution by Category
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: LINKS -->
+        <div class="section" id="section-links">
+            <div class="links-toolbar">
+                <div class="search-box">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search title, category, or URL...">
+                    <button class="clear-search" id="clearSearch"><i class="ph ph-x"></i></button>
+                </div>
+                <div class="links-count" id="linksCount">0 links</div>
+            </div>
+
+            <div class="category-matrix" id="matrixContainer"></div>
+        </div>
+
+        <!-- SECTION: ADD LINK -->
+        <div class="section" id="section-add">
+            <div class="add-section">
+                <div class="input-section animate-in">
+                    <h2>
+                        <i class="ph ph-plus"></i>
+                        Add New Link
+                    </h2>
+                    
+                    <div class="input-group">
+                        <label>Category</label>
+                        <input type="text" id="kategoriInput" placeholder="e.g. tools, api, docs..." list="categoryList">
+                        <datalist id="categoryList"></datalist>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" id="judulInput" placeholder="Website or app name">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>URL</label>
+                        <input type="url" id="urlInput" placeholder="https://..." required>
+                    </div>
+                    
+                    <button class="btn-primary" id="simpanBtn">
+                        <i class="ph ph-floppy-disk"></i>
+                        <span>Save Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDv8eCg1KVP1i8n1xsA6xko1KhYKYuI_Ys",
+            authDomain: "anime-pull.firebaseapp.com",
+            databaseURL: "https://anime-pull-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "anime-pull",
+            storageBucket: "anime-pull.firebasestorage.app",
+            messagingSenderId: "207802708188",
+            appId: "1:207802708188:web:fedaf62ea041376c408419",
+            measurementId: "G-D79KM7NBHW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const kategoriInput = document.getElementById('kategoriInput');
+        const judulInput = document.getElementById('judulInput');
+        const urlInput = document.getElementById('urlInput');
+        const simpanBtn = document.getElementById('simpanBtn');
+        const matrixContainer = document.getElementById('matrixContainer');
+        const statTotalLinks = document.getElementById('statTotalLinks');
+        const statTotalCategories = document.getElementById('statTotalCategories');
+        const statTodayLinks = document.getElementById('statTodayLinks');
+        const statTopCategory = document.getElementById('statTopCategory');
+        const categoryDatalist = document.getElementById('categoryList');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const linksCount = document.getElementById('linksCount');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const hamburgerIcon = document.getElementById('hamburgerIcon');
+
+        let categoryChart = null;
+        let currentSection = 'dashboard';
+
+        // Tab Switching
+        window.switchTab = function(section) {
+            currentSection = section;
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.section === section);
+            });
+            
+            // Update sections
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.toggle('active', sec.id === `section-${section}`);
+            });
+            
+            // Close mobile menu
+            mobileMenu.classList.remove('open');
+            hamburgerIcon.className = 'ph ph-list';
+            
+            // Refresh chart if dashboard
+            if (section === 'dashboard' && categoryChart) {
+                setTimeout(() => categoryChart.resize(), 50);
+            }
+            
+            // Focus search if links
+            if (section === 'links') {
+                setTimeout(() => searchInput.focus(), 100);
+            }
+            
+            // Focus first input if add
+            if (section === 'add') {
+                setTimeout(() => kategoriInput.focus(), 100);
+            }
+        };
+
+        window.toggleMobileMenu = function() {
+            const isOpen = mobileMenu.classList.toggle('open');
+            hamburgerIcon.className = isOpen ? 'ph ph-x' : 'ph ph-list';
+        };
+
+        // Theme
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        if (currentTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            themeIcon.className = 'ph ph-moon';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                localStorage.setItem('theme', 'light');
+                themeIcon.className = 'ph ph-moon';
+            } else {
+                document.documentElement.classList.remove('light');
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.className = 'ph ph-sun';
+            }
+            if (categoryChart) updateChartColors();
+        });
+
+        // SweetAlert
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn-swal btn-swal-danger",
+                cancelButton: "btn-swal btn-swal-success"
+            },
+            buttonsStyling: false
+        });
+
+        // Save
+        simpanBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            const judul = judulInput.value.trim() || url; 
+            const kategori = kategoriInput.value.trim() || 'uncategorized';
+
+            if (!url) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Required',
+                    text: 'URL is required.',
+                    confirmButtonColor: 'var(--primary)'
+                });
+                return;
+            }
+
+            const finalUrl = (!/^https?:\/\//i.test(url)) ? 'https://' + url : url;
+            const btnContent = simpanBtn.innerHTML;
+            simpanBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i><span>Saving...</span>';
+            simpanBtn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "kumpulan_link"), {
+                    kategori: kategori,
+                    judul: judul,
+                    url: finalUrl,
+                    timestamp: serverTimestamp()
+                });
+                
+                judulInput.value = '';
+                urlInput.value = '';
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved',
+                    text: 'Link saved successfully.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+
+                // Switch to links tab after save
+                setTimeout(() => switchTab('links'), 1400);
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to save data.'
+                });
+            } finally {
+                simpanBtn.innerHTML = btnContent;
+                simpanBtn.disabled = false;
+            }
+        });
+
+        // Delete
+        window.hapusLink = async (id) => {
+            swalWithBootstrapButtons.fire({
+                title: "Delete Link?",
+                text: "This action cannot be undone.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Delete",
+                cancelButtonText: "Cancel",
+                reverseButtons: true
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        await deleteDoc(doc(db, "kumpulan_link", id));
+                        swalWithBootstrapButtons.fire({
+                            title: "Deleted",
+                            text: "Link has been removed.",
+                            icon: "success",
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+                    } catch (error) {
+                        swalWithBootstrapButtons.fire({
+                            title: "Error",
+                            text: "Failed to delete.",
+                            icon: "error"
+                        });
+                    }
+                }
+            });
+        };
+
+        // Search
+        function performSearch(query) {
+            const searchTerm = query.toLowerCase().trim();
+            const cards = document.querySelectorAll('.category-card');
+            let visibleCount = 0;
+            let hasVisibleCards = false;
+
+            cards.forEach(card => {
+                const categoryName = card.querySelector('.category-header span').textContent.toLowerCase();
+                const cardLinks = card.querySelectorAll('.link-item');
+                let hasVisibleLinks = false;
+
+                cardLinks.forEach(link => {
+                    const title = link.querySelector('a').textContent.toLowerCase();
+                    const url = link.querySelector('span').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || url.includes(searchTerm) || categoryName.includes(searchTerm)) {
+                        link.classList.remove('hidden');
+                        hasVisibleLinks = true;
+                        visibleCount++;
+                    } else {
+                        link.classList.add('hidden');
+                    }
+                });
+
+                if (hasVisibleLinks || categoryName.includes(searchTerm)) {
+                    card.classList.remove('hidden');
+                    hasVisibleCards = true;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            linksCount.textContent = `${visibleCount} result${visibleCount !== 1 ? 's' : ''}`;
+
+            const existingEmpty = document.querySelector('.search-empty');
+            if (!hasVisibleCards && searchTerm) {
+                if (!existingEmpty) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'empty-state search-empty';
+                    emptyDiv.style.gridColumn = '1/-1';
+                    emptyDiv.innerHTML = `
+                        <i class="ph ph-magnifying-glass"></i>
+                        <h3>No results</h3>
+                        <p>No links found for "${query}"</p>
+                    `;
+                    matrixContainer.appendChild(emptyDiv);
+                }
+            } else if (existingEmpty) {
+                existingEmpty.remove();
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            clearSearchBtn.classList.toggle('visible', val.length > 0);
+            performSearch(val);
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearchBtn.classList.remove('visible');
+            performSearch('');
+            searchInput.focus();
+        });
+
+        // Chart
+        function initChart(labels, data) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#7d8590' : '#656d76';
+            const gridColor = isDark ? '#30363d' : '#d0d7de';
+
+            const colors = [
+                '#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', 
+                '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'
+            ];
+
+            if (categoryChart) categoryChart.destroy();
+
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Links',
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        barThickness: 28,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isDark ? '#161b22' : '#ffffff',
+                            titleColor: isDark ? '#e6edf3' : '#1f2328',
+                            bodyColor: isDark ? '#7d8590' : '#656d76',
+                            borderColor: isDark ? '#30363d' : '#d0d7de',
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 6,
+                            displayColors: false,
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.parsed.y} links`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: textColor,
+                                font: { family: 'JetBrains Mono', size: 11 },
+                                stepSize: 1,
+                                padding: 8
+                            },
+                            grid: {
+                                color: gridColor,
+                                drawBorder: false,
+                                tickLength: 0
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            ticks: {
+                                color: textColor,
+                                font: { family: 'Inter', size: 12 }
+                            },
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 600,
+                        easing: 'easeOutCubic'
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if (!categoryChart) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            categoryChart.options.scales.y.ticks.color = isDark ? '#7d8590' : '#656d76';
+            categoryChart.options.scales.x.ticks.color = isDark ? '#7d8590' : '#656d76';
+            categoryChart.options.scales.y.grid.color = isDark ? '#30363d' : '#d0d7de';
+            categoryChart.options.plugins.tooltip.backgroundColor = isDark ? '#161b22' : '#ffffff';
+            categoryChart.options.plugins.tooltip.titleColor = isDark ? '#e6edf3' : '#1f2328';
+            categoryChart.options.plugins.tooltip.bodyColor = isDark ? '#7d8590' : '#656d76';
+            categoryChart.options.plugins.tooltip.borderColor = isDark ? '#30363d' : '#d0d7de';
+            categoryChart.update();
+        }
+
+        // Real-time
+        const q = query(collection(db, "kumpulan_link"), orderBy("timestamp", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            let allLinks = [];
+            snapshot.forEach((doc) => {
+                allLinks.push({ id: doc.id, ...doc.data() });
+            });
+
+            statTotalLinks.innerText = allLinks.length;
+            linksCount.textContent = `${allLinks.length} link${allLinks.length !== 1 ? 's' : ''}`;
+
+            const groupedData = allLinks.reduce((acc, curr) => {
+                const kat = curr.kategori || 'uncategorized';
+                if (!acc[kat]) acc[kat] = [];
+                acc[kat].push(curr);
+                return acc;
+            }, {});
+
+            const categories = Object.keys(groupedData);
+            statTotalCategories.innerText = categories.length;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayLinks = allLinks.filter(link => {
+                if (!link.timestamp) return false;
+                const linkDate = link.timestamp.toDate ? link.timestamp.toDate() : new Date(link.timestamp);
+                return linkDate >= today;
+            });
+            statTodayLinks.innerText = todayLinks.length;
+
+            let topCat = '-';
+            let topCount = 0;
+            categories.forEach(cat => {
+                if (groupedData[cat].length > topCount) {
+                    topCount = groupedData[cat].length;
+                    topCat = cat;
+                }
+            });
+            statTopCategory.innerText = topCat;
+
+            const chartLabels = categories;
+            const chartData = categories.map(cat => groupedData[cat].length);
+            initChart(chartLabels, chartData);
+
+            categoryDatalist.innerHTML = '';
+            categories.forEach(kat => {
+                const option = document.createElement('option');
+                option.value = kat;
+                categoryDatalist.appendChild(option);
+            });
+
+            matrixContainer.innerHTML = '';
+            
+            if (categories.length === 0) {
+                matrixContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="ph ph-archive-box"></i>
+                        <h3>No data yet</h3>
+                        <p>Add your first link using the Add Link tab.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            categories.forEach((kategori, index) => {
+                const linkList = groupedData[kategori];
+                
+                const card = document.createElement('div');
+                card.className = 'category-card animate-in';
+                card.style.animationDelay = `${0.05 * index}s`;
+                
+                let linksHTML = '';
+                linkList.forEach(link => {
+                    linksHTML += `
+                        <div class="link-item">
+                            <div class="link-content">
+                                <a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.judul}</a>
+                                <span>${link.url}</span>
+                            </div>
+                            <button class="action-btn" onclick="hapusLink('${link.id}')" title="Delete">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="category-header">
+                        <span><i class="ph ph-folder-notch"></i>${kategori}</span>
+                        <span class="badge">${linkList.length}</span>
+                    </div>
+                    <div class="category-body">
+                        ${linksHTML}
+                    </div>
+                `;
+                
+                matrixContainer.appendChild(card);
+            });
+
+            if (searchInput.value) performSearch(searchInput.value);
+        });
+
+        // Keyboard
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') simpanBtn.click();
+        });
+        judulInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') urlInput.focus();
+        });
+        kategoriInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') judulInput.focus();
+        });
+    </script>
+</body>
+</html>
